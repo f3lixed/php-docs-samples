@@ -50,4 +50,20 @@ class AnalyzeEntitiesCommandTest extends \PHPUnit_Framework_TestCase
         );
         $this->expectOutputRegex('/San Jose: http:\/\/en.wikipedia.org/');
     }
+
+    public function testEntitiesFromStorageObject()
+    {
+        if (!self::$hasCredentials) {
+            $this->markTestSkipped('No application credentials were found.');
+        }
+
+        $application = new Application();
+        $application->add(new AnalyzeEntitiesCommand());
+        $commandTester = new CommandTester($application->get('entities'));
+        $commandTester->execute(
+            ['text' =>  explode(' ', 'Do you know the way to San Jose?')],
+            ['interactive' => false]
+        );
+        $this->expectOutputRegex('/San Jose: http:\/\/en.wikipedia.org/');
+    }
 }
