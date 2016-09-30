@@ -45,7 +45,7 @@ class AnalyzeEntitiesCommandTest extends \PHPUnit_Framework_TestCase
         $application->add(new AnalyzeEntitiesCommand());
         $commandTester = new CommandTester($application->get('entities'));
         $commandTester->execute(
-            ['text' =>  explode(' ', 'Do you know the way to San Jose?')],
+            ['content' =>  explode(' ', 'Do you know the way to San Jose?')],
             ['interactive' => false]
         );
         $this->expectOutputRegex('/San Jose: http:\/\/en.wikipedia.org/');
@@ -56,12 +56,15 @@ class AnalyzeEntitiesCommandTest extends \PHPUnit_Framework_TestCase
         if (!self::$hasCredentials) {
             $this->markTestSkipped('No application credentials were found.');
         }
+        if (!$gcsFile = getenv('GOOGLE_LANGUAGE_GCS_FILE')) {
+            $this->markTestSkipped('No GCS file.');
+        }
 
         $application = new Application();
         $application->add(new AnalyzeEntitiesCommand());
         $commandTester = new CommandTester($application->get('entities'));
         $commandTester->execute(
-            ['text' =>  explode(' ', 'Do you know the way to San Jose?')],
+            ['content' =>  $gcsFile],
             ['interactive' => false]
         );
         $this->expectOutputRegex('/San Jose: http:\/\/en.wikipedia.org/');

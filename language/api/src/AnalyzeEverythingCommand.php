@@ -54,7 +54,7 @@ EOF
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $content = implode(' ', $input->getArgument('content'));
+        $content = implode(' ', (array) $input->getArgument('content'));
         if (preg_match('/gs:\/\/([a-z|0-9|\.|-]+)\/(\S+)/', $content, $matches)) {
             $storage = new StorageClient();
             $content = $storage->bucket($matches[1])->object($matches[2]);

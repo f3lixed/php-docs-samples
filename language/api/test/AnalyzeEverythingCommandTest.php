@@ -27,6 +27,8 @@ use Symfony\Component\Console\Tester\CommandTester;
 class AnalyzeEverythingCommandTest extends \PHPUnit_Framework_TestCase
 {
     protected static $hasCredentials;
+    private $commandTester;
+    private $expectedString;
 
     public static function setUpBeforeClass()
     {
@@ -35,21 +37,60 @@ class AnalyzeEverythingCommandTest extends \PHPUnit_Framework_TestCase
             filesize($path) > 0;
     }
 
+    public function setUp()
+    {
+        $application = new Application();
+        $application->add(new AnalyzeEverythingCommand());
+        $this->commandTester = new CommandTester($application->get('everything'));
+        $this->expectedString = <<<EOF
+language: en
+sentiment: -0.3
+sentences:
+  0: Do you know the way to San Jose?
+tokens:
+  Do: VERB
+  you: PRON
+  know: VERB
+  the: DET
+  way: NOUN
+  to: ADP
+  San: NOUN
+  Jose: NOUN
+  ?: PUNCT
+entities:
+  San Jose: http://en.wikipedia.org/wiki/San_Jose,_California
+
+EOF;
+    }
+
     public function testEverything()
     {
         if (!self::$hasCredentials) {
             $this->markTestSkipped('No application credentials were found.');
         }
 
-        $application = new Application();
-        $application->add(new AnalyzeEverythingCommand());
-        $commandTester = new CommandTester($application->get('everything'));
-        $commandTester->execute(
-            ['text' =>  explode(' ', 'Do you know the way to San Jose?')],
+        $this->commandTester->execute(
+            ['content' =>  explode(' ', 'Do you know the way to San Jose?')],
             ['interactive' => false]
         );
-        $this->expectOutputRegex('/San Jose: http:\/\/en.wikipedia.org/');
-        $this->expectOutputRegex(`sentiment: -`);
-        $this->expectOutputRegex(`0: Do you know the way`);
+
+        $this->expectOutputString($this->expectedString);
+    }
+
+    public function testEverythingFromStorageObject()
+    {
+        if (!self::$hasCredentials) {
+            $this->markTestSkipped('No application credentials were found.');
+        }
+        if (!$gcsFile = getenv('GOOGLE_LANGUAGE_GCS_FILE')) {
+            $this->markTestSkipped('No GCS file.');
+        }
+
+        $this->commandTester->execute(
+            ['content' =>  $gcsFile],
+            ['interactive' => false]
+        );
+
+        $this->expectOutputString($this->expectedString);
     }
 }
